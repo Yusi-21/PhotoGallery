@@ -1,11 +1,13 @@
 package com.mirea.photogallery.presentation
 
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -70,6 +72,9 @@ fun GalleryScreen(
                 PhotoGrid(
                     photos = uiState.photos,
                     onPhotoClick = { photo ->
+                        //here is we can add show photo
+                    },
+                    onExportClick = { photo ->
                         viewModel.exportPhoto(photo)
                     }
                 )
@@ -112,7 +117,8 @@ fun EmptyGallery(
 @Composable
 fun PhotoGrid(
     photos: List<Photo>,
-    onPhotoClick: (Photo) -> Unit
+    onPhotoClick: (Photo) -> Unit,
+    onExportClick: (Photo) -> Unit
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
@@ -123,7 +129,8 @@ fun PhotoGrid(
         items(photos) { photo ->
             PhotoItem(
                 photo = photo,
-                onClick = { onPhotoClick(photo) }
+                onClick = { onPhotoClick(photo) },
+                onExport = { onExportClick(photo) }
             )
         }
     }
@@ -132,13 +139,18 @@ fun PhotoGrid(
 @Composable
 fun PhotoItem(
     photo: Photo,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onExport: () -> Unit
 ) {
+    var showMenu by remember { mutableStateOf(false) }
     Card(
         modifier = Modifier
             .aspectRatio(1f)
-            .padding(2.dp),
-        onClick = onClick
+            .padding(2.dp)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = { showMenu = true }
+            ),
     ) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
@@ -149,5 +161,21 @@ fun PhotoItem(
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )
+
+        DropdownMenu(
+            expanded = showMenu,
+            onDismissRequest = { showMenu = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("Экспорт в галерею") },
+                onClick = {
+                    onExport()
+                    showMenu = false
+                },
+                leadingIcon = {
+                    Icon(Icons.Default.Share, contentDescription = null)
+                }
+            )
+        }
     }
 }
